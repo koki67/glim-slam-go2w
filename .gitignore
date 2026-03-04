@@ -1,0 +1,16 @@
+# Colcon workspace artifacts
+build/
+install/
+log/
+
+# Bags
+humble_ws/bags/
+
+# IDE
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
