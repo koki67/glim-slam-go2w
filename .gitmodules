@@ -9,3 +9,4 @@
 [submodule "humble_ws/src/HesaiLidar_ROS2_techshare"]
 	path = humble_ws/src/HesaiLidar_ROS2_techshare
 	url = https://github.com/koki67/HesaiLidar_ROS2_techshare.git
+	branch = main

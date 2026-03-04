@@ -76,12 +76,23 @@ RUN curl -s https://koide3.github.io/ppa/setup_ppa.sh | bash
 # Change to ros-humble-glim-ros for CPU-only, or
 # ros-humble-glim-ros-cuda12.6 for newer CUDA
 ARG GLIM_PACKAGE=ros-humble-glim-ros-cuda12.2
-RUN apt-get update && apt-get install -y \
-    libiridescence-dev \
-    libboost-all-dev \
-    libglfw3-dev \
-    libmetis-dev \
-    libgtsam-points-cuda12.2-dev \
-    ${GLIM_PACKAGE} && \
-    ldconfig && \
+ARG GTSAM_POINTS_PACKAGE=""
+RUN set -eux; \
+    if [ -z "${GTSAM_POINTS_PACKAGE}" ]; then \
+        case "${GLIM_PACKAGE}" in \
+            ros-humble-glim-ros-cuda12.2) GTSAM_POINTS_PACKAGE="libgtsam-points-cuda12.2-dev" ;; \
+            ros-humble-glim-ros-cuda12.6) GTSAM_POINTS_PACKAGE="libgtsam-points-cuda12.6-dev" ;; \
+            ros-humble-glim-ros) GTSAM_POINTS_PACKAGE="libgtsam-points-dev" ;; \
+            *) echo "Unsupported GLIM_PACKAGE=${GLIM_PACKAGE}. Set --build-arg GTSAM_POINTS_PACKAGE=<package>." >&2; exit 1 ;; \
+        esac; \
+    fi; \
+    apt-get update; \
+    apt-get install -y \
+        libiridescence-dev \
+        libboost-all-dev \
+        libglfw3-dev \
+        libmetis-dev \
+        "${GTSAM_POINTS_PACKAGE}" \
+        "${GLIM_PACKAGE}"; \
+    ldconfig; \
     rm -rf /var/lib/apt/lists/*

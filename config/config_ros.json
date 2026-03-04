@@ -24,7 +24,7 @@
             "librviz_viewer.so"
         ],
         // Topics — Go2-W sensor topics
-        "imu_topic": "/go2w/imu",
+        "imu_topic": "/go2/imu",
         "points_topic": "/hesai/pandar",
         "image_topic": "/image",
         // QoS options

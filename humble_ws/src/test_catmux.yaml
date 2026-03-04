@@ -8,7 +8,7 @@ common:
 windows:
   - name: imu_publisher
     commands:
-      - ros2 run go2w_demo imu_publisher
+      - ros2 run go2_demo imu_publisher
 
   - name: hesai_lidar
     commands:

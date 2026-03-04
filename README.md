@@ -9,8 +9,8 @@ This repository follows the same deployment pattern as [dlio-slam-go2w](https://
 This setup is adapted for GO2-W with Hesai PandarXT-16 LiDAR.
 
 Main differences from a generic GLIM setup:
-- **IMU source**: GO2-W does not provide usable IMU from `sportmodestate`. IMU is taken from `lowstate` and republished to `/go2w/imu` by the `go2w_demo` node.
-- **LiDAR–IMU extrinsics**: `T_lidar_imu` in `config/config_sensors.json` is set for the Go2-W mounting geometry (translation: x=0.171 m, y=0.0 m, z=0.0908 m from the Unitree documentation).
+- **IMU source**: GO2-W does not provide usable IMU from `sportmodestate`. IMU is taken from `lowstate` and republished to `/go2/imu` by the `go2_demo` node.
+- **LiDAR–IMU extrinsics**: `T_lidar_imu` in `config/config_sensors.json` is set to `[-0.171, 0.0, -0.0908, 0, 0, 0, 1]`, which is the IMU→LiDAR transform used by GLIM and derived from the Unitree mounting translation (x=0.171 m, y=0.0 m, z=0.0908 m).
 - **GPU acceleration**: Configured to use CUDA 12.2 GPU-accelerated odometry and mapping modules on Jetson Orin NX.
 - **No upstream GLIM modifications**: GLIM is installed from the official PPA — no source patches needed.
 
@@ -72,7 +72,7 @@ docker build -t go2-glim:latest .
 cd ..
 ```
 
-> **Note**: The default Dockerfile uses `ros-humble-glim-ros-cuda12.2`. If your JetPack has a different CUDA version, pass `--build-arg GLIM_PACKAGE=ros-humble-glim-ros-cuda12.6` (or the appropriate variant). For CPU-only: `--build-arg GLIM_PACKAGE=ros-humble-glim-ros`.
+> **Note**: The default Dockerfile uses `ros-humble-glim-ros-cuda12.2`. If your JetPack has a different CUDA version, pass `--build-arg GLIM_PACKAGE=ros-humble-glim-ros-cuda12.6` (or the appropriate variant). For CPU-only: `--build-arg GLIM_PACKAGE=ros-humble-glim-ros`. The matching `gtsam_points` package is selected automatically; set `--build-arg GTSAM_POINTS_PACKAGE=<name>` only for custom GLIM package names.
 
 ### 3. Start container
 
@@ -100,7 +100,7 @@ catmux_create_session test_catmux.yaml
 ```
 
 This starts three tmux windows:
-1. **imu_publisher** — `ros2 run go2w_demo imu_publisher`
+1. **imu_publisher** — `ros2 run go2_demo imu_publisher`
 2. **hesai_lidar** — `ros2 launch hesai_lidar hesai_lidar_launch.py`
 3. **glim** — `ros2 run glim_ros glim_rosnode --ros-args -p config_path:=/external/config`
 
@@ -112,7 +112,7 @@ Use `Ctrl+B w` to switch between tmux windows.
 
 | Topic | Type | Source | Expected Rate |
 |-------|------|--------|---------------|
-| `/go2w/imu` | `sensor_msgs/Imu` | `go2w_demo imu_publisher` | ~400 Hz |
+| `/go2/imu` | `sensor_msgs/Imu` | `go2_demo imu_publisher` | ~400 Hz |
 | `/hesai/pandar` | `sensor_msgs/PointCloud2` | `hesai_lidar` | ~10 Hz |
 
 ### Output Topics
@@ -169,8 +169,8 @@ source /external/install/setup.bash
 source /external/src/unitree_ros2/setup.sh
 
 # Check sensor topics
-ros2 topic list | grep -E 'go2w/imu|hesai'
-ros2 topic hz /go2w/imu          # Should be ~400 Hz
+ros2 topic list | grep -E 'go2/imu|hesai'
+ros2 topic hz /go2/imu          # Should be ~400 Hz
 ros2 topic hz /hesai/pandar       # Should be ~10 Hz
 
 # Check GLIM output
@@ -195,7 +195,7 @@ The default `config/config.json` uses GPU modules (`config_odometry_gpu.json`, e
 
 ### LiDAR–IMU Extrinsics
 
-If your sensor mounting differs, edit `T_lidar_imu` in `config/config_sensors.json`. The transform is in TUM format `[x, y, z, qx, qy, qz, qw]` and represents the transformation from IMU frame to LiDAR frame.
+If your sensor mounting differs, edit `T_lidar_imu` in `config/config_sensors.json`. The transform is in TUM format `[x, y, z, qx, qy, qz, qw]` and represents the transformation from IMU frame to LiDAR frame. The default is `[-0.171, 0.0, -0.0908, 0, 0, 0, 1]`.
 
 ### IMU Noise
 
@@ -208,8 +208,8 @@ Tune `imu_acc_noise`, `imu_gyro_noise`, and `imu_bias_noise` in `config/config_s
 | `docker: Error response from daemon: unknown runtime "nvidia"` | Install `nvidia-docker2`: `sudo apt install nvidia-docker2 && sudo systemctl restart docker` |
 | No sensor topics visible | Check that Hesai LiDAR is reachable: `ping 192.168.123.20`. Check `unitree_ros2/setup.sh` is sourced. |
 | GLIM crashes with CUDA error | Verify JetPack CUDA version matches the GLIM package variant. Try CPU-only: rebuild with `--build-arg GLIM_PACKAGE=ros-humble-glim-ros`. |
-| IMU topic missing | Ensure `go2w_demo imu_publisher` is running. Check that GO2-W SDK connection is established. |
-| Poor mapping quality | Verify extrinsics in `config_sensors.json`. Tune IMU noise parameters. Check that `/go2w/imu` timestamps are synchronized. |
+| IMU topic missing | Ensure `go2_demo imu_publisher` is running. Check that GO2-W SDK connection is established. |
+| Poor mapping quality | Verify extrinsics in `config_sensors.json`. Tune IMU noise parameters. Check that `/go2/imu` timestamps are synchronized. |
 | Build fails on `colcon build` | Ensure `source /opt/ros/humble/setup.bash` was run. Try sequential build: `colcon build --executor sequential`. |
 | X11 / RViz display issues | Run `xhost +local:docker` on the host before starting the container. |
 
