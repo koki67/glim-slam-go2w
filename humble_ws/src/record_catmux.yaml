@@ -1,0 +1,29 @@
+common:
+  before_commands:
+    - source /opt/ros/humble/setup.bash
+    - source /external/install/setup.bash
+    - source /external/src/unitree_ros2/setup.sh
+    - export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+
+windows:
+  - name: imu_publisher
+    commands:
+      - ros2 run go2w_demo imu_publisher
+
+  - name: hesai_lidar
+    commands:
+      - ros2 launch hesai_lidar hesai_lidar_launch.py
+
+  - name: glim
+    commands:
+      - ros2 run glim_ros glim_rosnode --ros-args -p config_path:=/external/config
+
+  - name: bag_record
+    commands:
+      - mkdir -p /external/bags
+      - ros2 bag record -o /external/bags/glim_$(date +%Y%m%d_%H%M%S)
+          /glim_ros/odom
+          /glim_ros/pose
+          /glim_ros/path
+          /tf
+          /tf_static
