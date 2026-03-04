@@ -1,0 +1,42 @@
+{
+    /*** Sensor configurations for Unitree Go2-W + Hesai PandarXT-16 ***/
+    //
+    // T_lidar_imu format: [x, y, z, qx, qy, qz, qw] (TUM format)
+    // "T_lidar_imu" transforms points in the "imu" frame into the "lidar" frame
+    // i.e., p_lidar = T_lidar_imu * p_imu
+    //
+    // From Unitree documentation, LiDAR relative to IMU/body:
+    //   Translation: x=0.171 m, y=0.0 m, z=0.0908 m
+    //   Rotation: identity
+    //
+    // T_lidar_imu is the inverse of the above:
+    //   Translation: x=-0.171, y=0.0, z=-0.0908
+    //   Rotation: identity (qx=0, qy=0, qz=0, qw=1)
+    //
+    "sensors": {
+        // IMU noise parameters (conservative defaults; tune as needed)
+        "imu_acc_noise": 0.05,
+        "imu_gyro_noise": 0.02,
+        "imu_int_noise": 0.001,
+        "imu_bias_noise": 1e-5,
+        // LiDAR config
+        "global_shutter_lidar": false,
+        "T_lidar_imu": [
+            -0.171,
+            0.0,
+            -0.0908,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+        ],
+        "intensity_field": "intensity",
+        "ring_field": "",
+        // LiDAR per-point time settings
+        // Hesai XT16 provides absolute timestamps; let GLIM auto-detect
+        "autoconf_perpoint_times": true,
+        "autoconf_prefer_frame_time": false,
+        "perpoint_relative_time": true,
+        "perpoint_time_scale": 1.0
+    }
+}
