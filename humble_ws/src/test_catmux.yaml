@@ -1,0 +1,19 @@
+common:
+  before_commands:
+    - source /opt/ros/humble/setup.bash
+    - source /external/install/setup.bash
+    - source /external/src/unitree_ros2/setup.sh
+    - export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+
+windows:
+  - name: imu_publisher
+    commands:
+      - ros2 run go2w_demo imu_publisher
+
+  - name: hesai_lidar
+    commands:
+      - ros2 launch hesai_lidar hesai_lidar_launch.py
+
+  - name: glim
+    commands:
+      - ros2 run glim_ros glim_rosnode --ros-args -p config_path:=/external/config
