@@ -5,6 +5,12 @@ SHELL ["/bin/bash", "-c"]
 # Set the environment to non-interactive
 ENV DEBIAN_FRONTEND=noninteractive
 
+# Refresh ROS 2 GPG key — dustynv base may ship an expired key
+RUN apt-get update -q --fix-missing || true && \
+    apt-get install -y --no-install-recommends curl ca-certificates && \
+    curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key \
+        | gpg --dearmor -o /usr/share/keyrings/ros-archive-keyring.gpg
+
 RUN apt-get update -q && \
     apt-get install -y apt-utils
 
