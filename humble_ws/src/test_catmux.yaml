@@ -1,6 +1,7 @@
 common:
   before_commands:
     - source /opt/ros/humble/setup.bash
+    - source /opt/glim_ros2_ws/install/setup.bash
     - source /external/install/setup.bash
     - source /external/src/unitree_ros2/setup.sh
     - export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp

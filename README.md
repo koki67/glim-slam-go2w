@@ -11,14 +11,14 @@ This setup is adapted for GO2-W with Hesai PandarXT-16 LiDAR.
 Main differences from a generic GLIM setup:
 - **IMU source**: GO2-W does not provide usable IMU from `sportmodestate`. IMU is taken from `lowstate` and republished to `/go2/imu` by the `go2_demo` node.
 - **LiDAR–IMU extrinsics**: `T_lidar_imu` in `config/config_sensors.json` is set to `[-0.171, 0.0, -0.0908, 0, 0, 0, 1]`, which is the IMU→LiDAR transform used by GLIM and derived from the Unitree mounting translation (x=0.171 m, y=0.0 m, z=0.0908 m).
-- **GPU acceleration**: Configured for CUDA 11.4 on JetPack 5.1.1 (L4T R35.3.1). `gtsam_points` and GLIM are built from source inside the container using the Jetson's native CUDA toolchain.
+- **GPU acceleration**: Configured for CUDA 11.4 on JetPack 5.1.1 (L4T R35.3.1). GTSAM 4.3a0, `gtsam_points` v1.2.1, and GLIM v1.2.1 are all built from source inside the container with `-DCMAKE_CUDA_ARCHITECTURES=87` (Jetson Orin NX).
 - **L4T-based container**: Uses `dustynv/ros:humble-ros-base-l4t-r35.3.1` as the base image so that `nvcc` and CUDA headers are available at build time.
 
 ## Integration Approach
 
-**Source build on L4T**: The Docker image is based on `dustynv/ros:humble-ros-base-l4t-r35.3.1`, which provides ROS 2 Humble and the full CUDA 11.4 development toolchain for JetPack 5.1.1. `gtsam_points` (v1.0.4) and GLIM (v1.2.1) are built from source inside the image with `BUILD_WITH_CUDA=ON`. Non-CUDA dependencies (GTSAM, iridescence, boost) are still installed from [koide3's PPA](https://koide3.github.io/ppa/).
+**Source build on L4T**: The Docker image is based on `dustynv/ros:humble-ros-base-l4t-r35.3.1`, which provides ROS 2 Humble and the full CUDA 11.4 development toolchain for JetPack 5.1.1. GTSAM (4.3a0), `gtsam_points` (v1.2.1), GLIM (v1.2.1), and `glim_ros2` (v1.2.1) are all built from source inside the image with `BUILD_WITH_CUDA=ON` and `CMAKE_CUDA_ARCHITECTURES=87`. The [koide3 PPA](https://koide3.github.io/ppa/) (ubuntu2204 repo) is used only for Iridescence and Boost.
 
-> **Why not the PPA for GLIM?** The koide3 PPA only ships GLIM binaries for CUDA 12.2 and above. JetPack 5.1.1 provides CUDA 11.4, so a source build is required. Upgrading JetPack is not recommended as it could break Unitree's SDK and DDS stack.
+> **Why not the PPA for GLIM/GTSAM?** The koide3 PPA only ships packages for Ubuntu 22.04+ and CUDA 12.2+. JetPack 5.1.1 is based on Ubuntu 20.04 (Focal) with CUDA 11.4, so GTSAM, gtsam_points, and GLIM must all be built from source. Upgrading JetPack is not recommended as it could break Unitree's SDK and DDS stack.
 
 ## Repository Contents
 
@@ -26,7 +26,7 @@ This top-level repository tracks only wrapper/config files:
 
 | Path | Description |
 |------|-------------|
-| `docker/Dockerfile` | L4T R35.3.1 image (Ubuntu 20.04 + CUDA 11.4) with ROS 2 Humble; GLIM built from source |
+| `docker/Dockerfile` | L4T R35.3.1 image (Ubuntu 20.04 + CUDA 11.4) with ROS 2 Humble; GTSAM 4.3a0 + gtsam_points v1.2.1 + GLIM v1.2.1 built from source |
 | `docker/humble.sh` | Starts the container with host network, NVIDIA runtime, and X11 |
 | `config/config.json` | GLIM main config (selects GPU modules) |
 | `config/config_ros.json` | Go2-W topic names, QoS, frame IDs |
@@ -74,7 +74,7 @@ docker build -t go2-glim:latest .
 cd ..
 ```
 
-> **Note**: The build compiles `gtsam_points` and GLIM from source against CUDA 11.4 and takes **30–40 minutes** on the Jetson itself. Run on a host machine with fast internet for the best experience — the resulting image can then be transferred to the robot with `docker save / docker load`.
+> **Note**: The build compiles GTSAM, `gtsam_points`, and GLIM from source against CUDA 11.4 and takes **45–60 minutes** on the Jetson itself. Cross-building or building on a powerful host and transferring via `docker save / docker load` is recommended.
 
 ### 3. Start container
 
@@ -231,7 +231,7 @@ The orchestration files in this repository (Docker setup, catmux sessions, confi
 
 - Dependency repos under `humble_ws/src/` are git submodules pinned to specific commits in koki67's forks.
 - GO2-W modifications (lowstate IMU, DDS setup) are committed directly in those forks — no manual editing required after cloning.
-- **GLIM is not a submodule** — it is cloned at a pinned tag and built from source inside Docker (`gtsam_points@v1.0.4`, `glim@v1.2.1`, `glim_ros2@v1.2.1`). To update, change the `--branch` tags in the Dockerfile.
+- **GLIM is not a submodule** — it is cloned at pinned tags and built from source inside Docker (`gtsam@4.3a0`, `gtsam_points@v1.2.1`, `glim@v1.2.1`, `glim_ros2@v1.2.1`). To update, change the `--branch` tags in the Dockerfile.
 - To update a submodule to its latest fork commit:
   ```bash
   cd humble_ws/src/<name> && git pull && cd ../../.. && git add humble_ws/src/<name> && git commit
